@@ -2,97 +2,89 @@ const seatContainer = document.querySelector(".seat-container");
 const btn = document.createElement("button");
 const errorText = document.createElement("p");
 const removeErrorButton = document.createElement("button");
+const priceText = document.createElement("h3");
 
 btn.classList.add("main-btn");
+btn.innerText = "Book Now";
 
 errorText.innerText = "Max five seats per booking";
 removeErrorButton.innerText = "Ok";
 errorText.appendChild(removeErrorButton);
 
+priceText.innerText = "Total Price: ₹0";
+
 removeErrorButton.addEventListener("click", () => {
   errorText.remove();
 });
-btn.innerText = "Book Now";
-let seats = [
-  { id: 1, state: "available" },
-  { id: 2, state: "available" },
-  { id: 3, state: "available" },
-  { id: 4, state: "available" },
-  { id: 5, state: "available" },
-  { id: 6, state: "available" },
-  { id: 7, state: "available" },
-  { id: 8, state: "available" },
-  { id: 9, state: "available" },
-  { id: 10, state: "available" },
-  { id: 11, state: "available" },
-  { id: 12, state: "available" },
-  { id: 13, state: "available" },
-  { id: 14, state: "available" },
-  { id: 15, state: "available" },
-  { id: 16, state: "available" },
-  { id: 17, state: "available" },
-  { id: 18, state: "available" },
-  { id: 19, state: "available" },
-  { id: 20, state: "available" },
-  { id: 21, state: "available" },
-  { id: 22, state: "available" },
-  { id: 23, state: "available" },
-  { id: 24, state: "available" },
-  { id: 25, state: "available" },
-  { id: 26, state: "available" },
-];
 
-seatContainer.addEventListener("click", (e) => {
-  e.preventDefault();
-  if (e.target.innerText == "Booked") {
-    return;
+const pricePerSeat = 150;
+
+let seats = [];
+for (let i = 1; i <= 26; i++) {
+  seats.push({ id: i, state: "available" });
+}
+
+/* Update Price */
+function updatePrice() {
+  let count = seats.filter(s => s.state === "selected").length;
+  priceText.innerText = "Total Price: ₹" + count * pricePerSeat;
+
+  if (count > 0) {
+    document.body.appendChild(priceText);
   } else {
-    let tempSeat = seats.filter((item) => item.state == "selected");
-    if (tempSeat.length == 5) {
-      let seat = e.target;
-      let id = seat.id;
-
-      if (seat) {
-        if (tempSeat.find((item) => item.id == id)) {
-          let currentSeat = seats.find((seat) => seat.id == id);
-          currentSeat.state =
-            currentSeat.state == "available" ? "selected" : "available";
-          seat.innerText =
-            currentSeat.state == "available" ? "Available" : "Selected";
-        } else {
-          seatContainer.after(errorText);
-        }
-      }
-    } else {
-      let seat = e.target;
-      if (seat) {
-        let id = seat.id;
-        let currentSeat = seats.find((seat) => seat.id == id);
-        currentSeat.state =
-          currentSeat.state == "available" ? "selected" : "available";
-        seat.innerText =
-          currentSeat.state == "available" ? "Available" : "Selected";
-        if (seats.find((item) => item.state == "selected")) {
-          document.body.appendChild(btn);
-        } else {
-          btn.remove();
-        }
-      }
-    }
+    priceText.remove();
   }
+}
+
+/* Seat Click */
+seatContainer.addEventListener("click", (e) => {
+
+  if (!e.target.classList.contains("seat")) return;
+  if (e.target.innerText === "Booked") return;
+
+  let selectedSeats = seats.filter(s => s.state === "selected");
+
+  let id = Number(e.target.id);
+  let currentSeat = seats.find(s => s.id === id);
+
+  if (selectedSeats.length === 5 && currentSeat.state !== "selected") {
+    seatContainer.after(errorText);
+    return;
+  }
+
+  currentSeat.state =
+    currentSeat.state === "available" ? "selected" : "available";
+
+  e.target.innerText =
+    currentSeat.state === "available" ? "Available" : "Selected";
+
+  e.target.classList.toggle("selected");
+
+  updatePrice();
+
+  if (seats.some(s => s.state === "selected")) {
+    document.body.appendChild(btn);
+  } else {
+    btn.remove();
+  }
+
 });
 
-// book seat logic
+/* Booking */
+btn.addEventListener("click", () => {
 
-btn.addEventListener("click", (e) => {
-  e.preventDefault();
-  seats = seats.map((item) => {
-    if (item.state == "selected") {
-      seatContainer.children[item.id - 1].innerText = "Booked";
-      return { id: item.id, state: "booked" };
-    } else {
-      return { id: item.id, state: item.state };
+  seats = seats.map(seat => {
+    if (seat.state === "selected") {
+      let el = seatContainer.children[seat.id - 1];
+      el.innerText = "Booked";
+      el.classList.remove("selected");
+      el.classList.add("booked");
+      return { id: seat.id, state: "booked" };
     }
+    return seat;
   });
+
   btn.remove();
+  priceText.remove();
+
 });
